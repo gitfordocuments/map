@@ -1,20 +1,26 @@
 import React, { useState, useMemo } from 'react';
-import { Bus, MapPin, Navigation, Phone, Info } from 'lucide-react';
+import { Bus, MapPin, Navigation, Phone, Info, LogIn, UserPlus } from 'lucide-react';
 import { SearchFilters } from './components/SearchFilters';
 import { RouteCard } from './components/RouteCard';
 import { TouristSpotCard } from './components/TouristSpotCard';
 import { RouteDetails } from './components/RouteDetails';
 import { TouristSpotDetails } from './components/TouristSpotDetails';
+import { AuthModal } from './components/AuthModal';
+import { UserMenu } from './components/UserMenu';
+import { useAuth } from './contexts/AuthContext';
 import { transportRoutes, TransportRoute } from './data/routes';
 import { touristSpots, TouristSpot } from './data/touristSpots';
 
 function App() {
+  const { isAuthenticated } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('');
   const [selectedVehicle, setSelectedVehicle] = useState('');
   const [activeTab, setActiveTab] = useState<'routes' | 'spots'>('routes');
   const [selectedRoute, setSelectedRoute] = useState<TransportRoute | null>(null);
   const [selectedSpot, setSelectedSpot] = useState<TouristSpot | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
 
   // Filter routes
   const filteredRoutes = useMemo(() => {
@@ -45,6 +51,11 @@ function App() {
     });
   }, [searchTerm]);
 
+  const handleAuthClick = (mode: 'login' | 'register') => {
+    setAuthMode(mode);
+    setShowAuthModal(true);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
       {/* Header */}
@@ -65,10 +76,33 @@ function App() {
                 <Phone size={16} />
                 <span>Línea de ayuda: 2213-3000</span>
               </div>
-              <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
-                <Info size={16} />
-                <span>Ayuda</span>
-              </button>
+              
+              {isAuthenticated ? (
+                <div className="flex items-center space-x-3">
+                  <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
+                    <Info size={16} />
+                    <span className="hidden md:inline">Ayuda</span>
+                  </button>
+                  <UserMenu />
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <button 
+                    onClick={() => handleAuthClick('login')}
+                    className="text-blue-600 hover:text-blue-800 px-3 py-2 rounded-lg hover:bg-blue-50 transition-colors flex items-center space-x-2"
+                  >
+                    <LogIn size={16} />
+                    <span className="hidden md:inline">Iniciar Sesión</span>
+                  </button>
+                  <button 
+                    onClick={() => handleAuthClick('register')}
+                    className="bg-gradient-to-r from-blue-600 to-green-600 text-white px-4 py-2 rounded-lg hover:from-blue-700 hover:to-green-700 transition-all duration-200 flex items-center space-x-2"
+                  >
+                    <UserPlus size={16} />
+                    <span className="hidden md:inline">Registrarse</span>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -224,6 +258,13 @@ function App() {
           onClose={() => setSelectedSpot(null)}
         />
       )}
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        initialMode={authMode}
+      />
 
       {/* Footer */}
       <footer className="bg-gray-900 text-white mt-16">
